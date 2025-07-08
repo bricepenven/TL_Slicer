@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TL-Slicer - TwelveLabs Video Processing</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #000000;
+      --primary-hover: #333333;
+      --background: #FFFFFF;
+      --surface: #F8F9FA;
+      --surface-light: #FFFFFF;
+      --border: #E5E7EB;
+      --text: #111827;
+      --text-secondary: #6B7280;
+      --success: #10B981;
+      --error: #EF4444;
+      --warning: #F59E0B;
+      --gradient-start: #FF6B6B;
+      --gradient-mid: #4ECDC4;
+      --gradient-end: #45B7D1;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header with Logo */
+    .header {
+      background: #FFFFFF;
+      padding: 2rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, 
+        #FF6B6B 0%, 
+        #FFE66D 20%, 
+        #8FE1A5 40%, 
+        #4ECDC4 60%, 
+        #45B7D1 80%, 
+        #9B6BFF 100%
+      );
+    }
+
+    .logo-container {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: 500;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .logo svg {
+      width: 50px;
+      height: 50px;
+      margin-right: 0.5rem;
+    }
+
+    .tagline {
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      flex: 1;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    /* File Input */
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    #fileInput {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .file-input-label {
+      display: block;
+      padding: 2rem;
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: 0.75rem;
+      text-align: center;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .file-input-label:hover {
+      background: var(--surface);
+      border-color: var(--primary);
+    }
+
+    #fileInput:focus + .file-input-label {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .file-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.7;
+    }
+
+    /* File List */
+    #fileList {
+      margin-top: 1rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    #fileList li {
+      background: #FFFFFF;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border: 1px solid var(--border);
+    }
+
+    #fileList li::before {
+      content: '📹';
+      font-size: 1.5rem;
+    }
+
+    /* Buttons */
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-right: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .button-secondary {
+      background: #FFFFFF;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .button-secondary:hover {
+      background: var(--surface);
+      border-color: var(--primary);
+    }
+
+    .button-stop {
+      background: var(--error);
+      color: white;
+      width: 100%;
+      font-size: 1.1rem;
+      padding: 1rem 2rem;
+    }
+
+    .button-stop:hover {
+      background: #DC2626;
+    }
+
+    /* Progress Bar */
+    #progressContainer {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: var(--surface);
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+    }
+
+    #progressBar {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #E5E7EB;
+      margin-top: 0.5rem;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    #progressBar::-webkit-progress-bar {
+      background: #E5E7EB;
+      border-radius: 4px;
+    }
+
+    #progressBar::-webkit-progress-value {
+      background: linear-gradient(90deg, 
+        #FF6B6B 0%, 
+        #FFE66D 20%, 
+        #8FE1A5 40%, 
+        #4ECDC4 60%, 
+        #45B7D1 80%, 
+        #9B6BFF 100%
+      );
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    #progressBar::-moz-progress-bar {
+      background: linear-gradient(90deg, 
+        #FF6B6B 0%, 
+        #FFE66D 20%, 
+        #8FE1A5 40%, 
+        #4ECDC4 60%, 
+        #45B7D1 80%, 
+        #9B6BFF 100%
+      );
+      border-radius: 4px;
+    }
+
+    #progressLabel {
+      display: inline-block;
+      margin-left: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Status */
+    #status {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      white-space: pre-wrap;
+      transition: all 0.3s;
+    }
+
+    #status:not(:empty) {
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    /* Search Section */
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--text);
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+    }
+
+    /* Checkboxes */
+    .checkbox-group {
+      display: flex;
+      gap: 2rem;
+      margin: 1rem 0;
+    }
+
+    .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .checkbox-wrapper input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 0.5rem;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    /* Search Results */
+    #searchResult {
+      margin-top: 1.5rem;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-family: inherit;
+      font-size: 1rem;
+      max-height: 500px;
+      overflow-y: auto;
+      white-space: normal;
+    }
+
+    #searchResult:empty {
+      display: none;
+    }
+
+    .search-header {
+      font-size: 1.125rem;
+      color: var(--text);
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+    }
+
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .search-result-item:hover {
+      background: var(--surface);
+      transform: translateX(4px);
+    }
+
+    .result-number {
+      min-width: 30px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .confidence-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .confidence-high {
+      background: #10B981;
+      color: white;
+    }
+
+    .confidence-medium {
+      background: #F59E0B;
+      color: white;
+    }
+
+    .confidence-low {
+      background: #EF4444;
+      color: white;
+    }
+
+    .timecode {
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--surface);
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .more-results-text {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .search-info {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .search-info::before {
+      content: 'ℹ️';
+      font-size: 1.25rem;
+    }
+
+    /* Scrollbar styling */
+    #searchResult::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #searchResult::-webkit-scrollbar-track {
+      background: var(--surface);
+      border-radius: 4px;
+    }
+
+    #searchResult::-webkit-scrollbar-thumb {
+      background: #D1D5DB;
+      border-radius: 4px;
+    }
+
+    #searchResult::-webkit-scrollbar-thumb:hover {
+      background: #9CA3AF;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      .card {
+        padding: 1.5rem;
+      }
+      
+      .logo {
+        font-size: 2rem;
+      }
+      
+      .logo .number {
+        font-size: 2.5rem;
+      }
+      
+      button {
+        width: 100%;
+        margin-right: 0;
+      }
+      
+      .checkbox-group {
+        flex-direction: column;
+        gap: 1rem;
+      }
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.6s linear infinite;
+      margin-left: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo-container">
+      <div class="logo">
+        TwelveLabs
+      </div>
+    </div>
+    <div class="tagline">TL-Slicer • Intelligent Video Processing</div>
+  </header>
+
+  <div class="container">
+    <!-- Upload Section -->
+    <div class="card">
+      <h2 class="card-title">Upload Video</h2>
+      
+      <div class="file-input-wrapper">
+        <input type="file" id="fileInput" accept="video/*" />
+        <label for="fileInput" class="file-input-label">
+          <div class="file-icon">📁</div>
+          <div>Click to select video or drag & drop here</div>
+          <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">
+            Supports all video formats • Auto-splits large files
+          </div>
+        </label>
+      </div>
+      
+      <ul id="fileList"></ul>
+      
+      <div style="margin-top: 1rem;">
+        <button onclick="submit('sdk')" id="sdkButton">
+          Process with SDK
+        </button>
+        <button onclick="submit('api')" id="apiButton">
+          Process with API
+        </button>
+        <button onclick="clearFiles()" class="button-secondary" id="clearButton">
+          Clear Selection
+        </button>
+      </div>
+      
+      <div id="stopButtonContainer" style="margin-top: 1rem; display: none;">
+        <button id="stopButton" onclick="stopUpload()" class="button-stop">
+          🛑 Stop Upload
+        </button>
+      </div>
+
+      <div id="progressContainer" style="display: none;">
+        <label style="margin-bottom: 0;">Upload Progress</label>
+        <progress id="progressBar" value="0" max="100"></progress>
+        <span id="progressLabel">0%</span>
+      </div>
+
+      <p id="status"></p>
+    </div>
+
+    <!-- Search Section -->
+    <div class="card">
+      <h2 class="card-title">Video Search</h2>
+      
+      <div class="search-info">
+        This search tool is designed to verify video indexing status and test search functionality after upload.
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label for="videoSelect">Select video:</label>
+        <select id="videoSelect">
+          <option value="">-- Select a video --</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <label for="query">Search query:</label>
+        <textarea id="query" placeholder="e.g., &quot;person walking&quot;, &quot;dog barking&quot;, &quot;sunset scene&quot;..."></textarea>
+      </div>
+
+      <div class="checkbox-group">
+        <label class="checkbox-wrapper">
+          <input type="checkbox" id="visualOption" checked>
+          <span>🎬 Visual Search</span>
+        </label>
+        <label class="checkbox-wrapper">
+          <input type="checkbox" id="audioOption" checked>
+          <span>🎵 Audio Search</span>
+        </label>
+      </div>
+
+      <button onclick="search('api')" style="margin-top: 1rem;">
+        Search Video
+      </button>
+
+      <pre id="searchResult"></pre>
+      
+      <button id="showMoreBtn" onclick="showMore()" style="display: none; margin-top: 1rem;">
+        Show More Results
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let selectedFile = null;
+    let allSearchResults = [];
+    let currentResultsShown = 10;
+    let currentUploadController = null;
+    let currentPollInterval = null;
+
+    const fileInput = document.getElementById("fileInput");
+    const fileList = document.getElementById("fileList");
+    const statusText = document.getElementById("status");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+    const progressContainer = document.getElementById("progressContainer");
+    const searchResult = document.getElementById("searchResult");
+    const videoSelect = document.getElementById("videoSelect");
+
+    // Load available videos on page load
+    loadVideos();
+
+    // File input handling
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files.length > 0) {
+        selectedFile = fileInput.files[0];
+        renderList();
+      }
+    });
+
+    // Drag and drop support
+    const fileLabel = document.querySelector('.file-input-label');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      fileLabel.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      fileLabel.addEventListener(eventName, () => {
+        fileLabel.style.borderColor = 'var(--primary-light)';
+        fileLabel.style.background = 'rgba(124, 58, 237, 0.1)';
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      fileLabel.addEventListener(eventName, () => {
+        fileLabel.style.borderColor = '';
+        fileLabel.style.background = '';
+      });
+    });
+
+    fileLabel.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      
+      if (files.length > 0) {
+        fileInput.files = files;
+        selectedFile = files[0];
+        renderList();
+      }
+    });
+
+    function renderList() {
+      fileList.innerHTML = "";
+      if (selectedFile) {
+        const li = document.createElement("li");
+        const fileSize = (selectedFile.size / (1024 * 1024)).toFixed(2);
+        li.innerHTML = `
+          <span style="flex: 1;">${selectedFile.name}</span>
+          <span style="color: var(--text-secondary); font-size: 0.875rem;">${fileSize} MB</span>
+        `;
+        fileList.appendChild(li);
+      }
+    }
+
+    function clearFiles() {
+      selectedFile = null;
+      fileInput.value = "";
+      fileList.innerHTML = "";
+      statusText.innerText = "";
+      progressBar.value = 0;
+      progressLabel.innerText = "0%";
+      progressContainer.style.display = "none";
+      
+      // Clear any ongoing upload
+      if (currentPollInterval) {
+        clearInterval(currentPollInterval);
+        currentPollInterval = null;
+      }
+      if (currentUploadController) {
+        currentUploadController.abort();
+        currentUploadController = null;
+      }
+    }
+
+    async function submit(method) {
+      if (!selectedFile) {
+        statusText.innerText = "⚠️ Please select a video file first";
+        statusText.style.color = "var(--warning)";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("method", method);
+
+      const filename = selectedFile.name;
+      progressContainer.style.display = "block";
+      statusText.innerText = "🚀 Starting upload...";
+      statusText.style.color = "var(--text)";
+      progressBar.value = 0;
+      progressLabel.innerText = "0%";
+
+      // Show stop button container, hide other buttons
+      document.getElementById('sdkButton').style.display = 'none';
+      document.getElementById('apiButton').style.display = 'none';
+      document.getElementById('clearButton').style.display = 'none';
+      document.getElementById('stopButtonContainer').style.display = 'block';
+      fileInput.disabled = true;
+
+      // Create abort controller for this upload
+      currentUploadController = new AbortController();
+
+      // Start polling for progress
+      currentPollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/progress/${encodeURIComponent(filename)}`);
+          const data = await res.json();
+          
+          progressBar.value = data.progress || 0;
+          progressLabel.innerText = (data.progress || 0) + "%";
+          statusText.innerText = data.status || "Processing...";
+          
+          if (data.status && (data.status.includes("successful") || data.status.includes("failed"))) {
+            clearInterval(currentPollInterval);
+            currentPollInterval = null;
+            document.getElementById('sdkButton').style.display = 'inline-block';
+            document.getElementById('apiButton').style.display = 'inline-block';
+            document.getElementById('clearButton').style.display = 'inline-block';
+            document.getElementById('stopButtonContainer').style.display = 'none';
+            fileInput.disabled = false;
+            
+            if (data.status.includes("successful")) {
+              statusText.style.color = "var(--success)";
+              setTimeout(loadVideos, 1000);
+            } else {
+              statusText.style.color = "var(--error)";
+            }
+          }
+        } catch (err) {
+          console.error("Progress check failed:", err);
+        }
+      }, 1000);
+
+      try {
+        const res = await fetch("http://localhost:5000/upload", {
+          method: "POST",
+          body: formData,
+          signal: currentUploadController.signal
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const result = await res.json();
+        console.log("Upload response:", result);
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          statusText.innerText = "❌ Upload cancelled by user";
+        } else {
+          statusText.innerText = "❌ Upload failed: " + err.message;
+        }
+        statusText.style.color = "var(--error)";
+        
+        clearInterval(currentPollInterval);
+        currentPollInterval = null;
+        document.getElementById('sdkButton').style.display = 'inline-block';
+        document.getElementById('apiButton').style.display = 'inline-block';
+        document.getElementById('clearButton').style.display = 'inline-block';
+        document.getElementById('stopButtonContainer').style.display = 'none';
+        fileInput.disabled = false;
+        console.error(err);
+      }
+    }
+
+    function stopUpload() {
+      if (currentUploadController) {
+        currentUploadController.abort();
+        currentUploadController = null;
+      }
+      
+      if (currentPollInterval) {
+        clearInterval(currentPollInterval);
+        currentPollInterval = null;
+      }
+      
+      // Send stop request to server
+      if (selectedFile) {
+        fetch(`http://localhost:5000/stop/${encodeURIComponent(selectedFile.name)}`, {
+          method: 'POST'
+        }).catch(err => console.error('Stop request failed:', err));
+      }
+      
+      statusText.innerText = "❌ Upload cancelled";
+      statusText.style.color = "var(--error)";
+      progressBar.value = 0;
+      progressLabel.innerText = "0%";
+      
+      document.getElementById('sdkButton').style.display = 'inline-block';
+      document.getElementById('apiButton').style.display = 'inline-block';
+      document.getElementById('clearButton').style.display = 'inline-block';
+      document.getElementById('stopButtonContainer').style.display = 'none';
+      fileInput.disabled = false;
+    }
+
+    async function loadVideos() {
+      try {
+        const res = await fetch("http://localhost:5000/videos");
+        const data = await res.json();
+        
+        videoSelect.innerHTML = '<option value="">-- Select a video --</option>';
+        
+        if (data.videos) {
+          data.videos.forEach(video => {
+            const option = document.createElement("option");
+            option.value = video.filename;
+            option.textContent = `${video.filename} (${video.chunk_count} chunk${video.chunk_count > 1 ? 's' : ''})`;
+            videoSelect.appendChild(option);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load videos:", err);
+      }
+    }
+
+    async function search(method) {
+      const query = document.getElementById("query").value.trim();
+      const selectedVideo = videoSelect.value;
+      const visualChecked = document.getElementById("visualOption").checked;
+      const audioChecked = document.getElementById("audioOption").checked;
+
+      if (!query) {
+        searchResult.innerHTML = '<div style="color: var(--warning);">⚠️ Please enter a search query</div>';
+        return;
+      }
+      
+      if (!selectedVideo) {
+        searchResult.innerHTML = '<div style="color: var(--warning);">⚠️ Please select a video to search</div>';
+        return;
+      }
+      
+      if (!visualChecked && !audioChecked) {
+        searchResult.innerHTML = '<div style="color: var(--warning);">⚠️ Please select at least one search option (Visual or Audio)</div>';
+        return;
+      }
+
+      searchResult.innerHTML = '<div style="color: var(--text);">🔍 Searching...</div>';
+      document.getElementById("showMoreBtn").style.display = "none";
+
+      const formData = new FormData();
+      formData.append("query", query);
+      formData.append("selectedVideo", selectedVideo);
+      formData.append("method", method);
+      
+      const searchOptions = [];
+      if (visualChecked) searchOptions.push("visual");
+      if (audioChecked) searchOptions.push("audio");
+      formData.append("searchOptions", JSON.stringify(searchOptions));
+
+      try {
+        const res = await fetch("http://localhost:5000/search", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+        if (data.result) {
+          // Parse the text result and convert to HTML
+          const lines = data.result.split('\n');
+          let htmlResult = '';
+          
+          // Extract header
+          if (lines[0].includes('Found')) {
+            htmlResult += `<div class="search-header">${lines[0]}</div>`;
+          }
+          
+          // Parse result items
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            // Match result pattern: "1. 123.45s - 678.90s (confidence: HIGH)"
+            const match = line.match(/^(\d+)\.\s*([\d.]+)s\s*-\s*([\d.]+)s\s*\(confidence:\s*([^)]+)\)/i);
+            
+            if (match) {
+              const [, num, start, end, confidence] = match;
+              const confLevel = confidence.toLowerCase();
+              const confClass = `confidence-${confLevel}`;
+              
+              htmlResult += `
+                <div class="search-result-item">
+                  <span class="result-number">${num}.</span>
+                  <span class="confidence-badge ${confClass}">${confidence.toUpperCase()}</span>
+                  <span class="timecode">${formatTimecode(parseFloat(start))}-${formatTimecode(parseFloat(end))}</span>
+                </div>
+              `;
+            } else if (line.includes('more results')) {
+              htmlResult += `<div class="more-results-text">${line}</div>`;
+            }
+          }
+          
+          searchResult.innerHTML = htmlResult;
+          searchResult.style.color = "var(--text)";
+          
+          if (data.allResults) {
+            allSearchResults = data.allResults;
+            currentResultsShown = 10;
+            const showMoreBtn = document.getElementById("showMoreBtn");
+            if (allSearchResults.length > 10) {
+              showMoreBtn.style.display = "inline-block";
+              showMoreBtn.innerText = `Show ${Math.min(10, allSearchResults.length - 10)} More Results`;
+            } else {
+              showMoreBtn.style.display = "none";
+            }
+          }
+        } else {
+          searchResult.innerHTML = `<div style="color: var(--error);">❌ ${data.error || "Unknown error"}</div>`;
+          document.getElementById("showMoreBtn").style.display = "none";
+        }
+      } catch (err) {
+        searchResult.innerText = "❌ Search failed: " + err.message;
+        searchResult.style.color = "var(--error)";
+      }
+    }
+
+    function formatTimecode(seconds) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = Math.floor(seconds % 60);
+      const ms = Math.floor((seconds % 1) * 100);
+      
+      if (hours > 0) {
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      } else {
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+      }
+    }
+
+    function showMore() {
+      if (!allSearchResults || allSearchResults.length === 0) return;
+      
+      const startIdx = currentResultsShown;
+      const endIdx = Math.min(currentResultsShown + 10, allSearchResults.length);
+      
+      let additionalHTML = '';
+      for (let i = startIdx; i < endIdx; i++) {
+        const r = allSearchResults[i];
+        const confidence = typeof r.confidence === 'string' ? r.confidence : 'medium';
+        const confClass = `confidence-${confidence.toLowerCase()}`;
+        
+        additionalHTML += `
+          <div class="search-result-item">
+            <span class="result-number">${i + 1}.</span>
+            <span class="confidence-badge ${confClass}">${confidence.toUpperCase()}</span>
+            <span class="timecode">${formatTimecode(r.start)}-${formatTimecode(r.end)}</span>
+          </div>
+        `;
+      }
+      
+      // Remove "more results" text if it exists
+      const moreResultsDiv = searchResult.querySelector('.more-results-text');
+      if (moreResultsDiv) {
+        moreResultsDiv.remove();
+      }
+      
+      // Add new results
+      searchResult.innerHTML += additionalHTML;
+      
+      currentResultsShown = endIdx;
+      
+      const showMoreBtn = document.getElementById("showMoreBtn");
+      if (currentResultsShown < allSearchResults.length) {
+        const remaining = allSearchResults.length - currentResultsShown;
+        showMoreBtn.innerText = `Show ${Math.min(10, remaining)} More Results`;
+      } else {
+        showMoreBtn.style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>
