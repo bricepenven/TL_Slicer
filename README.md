@@ -114,12 +114,12 @@ You can also upload videos directly from the command line without the web interf
 
 #### Using SDK uploader:
 ```bash
-python3 uploader_sdk.py /path/to/your/video.mp4
+python uploader_sdk.py /path/to/your/video.mp4
 ```
 
 #### Using API uploader:
 ```bash
-python3 uploader_API.py /path/to/your/video.mp4
+python uploader_API.py /path/to/your/video.mp4
 ```
 
 Example output:
