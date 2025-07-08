@@ -99,14 +99,54 @@ Navigate to `http://localhost:5000`
 
 ## Usage
 
-### Uploading Videos
+### Web Interface
 
 1. **Select a video** using the file picker or drag-and-drop
 2. **Choose processing method**:
-   - **SDK**: Uses TwelveLabs Python SDK (recommended)
+   - **SDK**: Uses Twelve Labs Python SDK (recommended)
    - **API**: Direct REST API calls
 3. **Monitor progress** as the video uploads and processes
 4. **Wait for completion** - Status will show "Upload & Indexing successful"
+
+### Command Line Interface (CLI)
+
+You can also upload videos directly from the command line without the web interface:
+
+#### Using SDK uploader:
+```bash
+python3 uploader_sdk.py /path/to/your/video.mp4
+```
+
+#### Using API uploader:
+```bash
+python3 uploader_API.py /path/to/your/video.mp4
+```
+
+Example output:
+```
+📽️ Video: PRAGUE_MAIN_STATION.mp4
+⏱️  Duration: 02:07:58
+💾 File size: 3.55 GB
+📊 Bitrate: 4.0 Mbps
+
+🔍 Checking if video needs splitting...
+📊 Video stats: Duration=7678.6s, Bitrate=4.0 Mbps
+🧮 Optimal chunk duration: 4329.6s (based on size/duration limits)
+✅ Created chunk 1: Duration=3463.7s, Size=1.91 GB
+✅ Created chunk 2: Duration=3463.7s, Size=1.27 GB
+✅ Created chunk 3: Duration=751.2s, Size=0.36 GB
+
+📦 Files to upload: 3
+🚀 Starting upload...
+⬆️ Uploading chunk 1/3 (1911.2 MB)...
+video_id=686c7e8365c7568af194fb34
+```
+
+The CLI mode is useful for:
+- Batch processing with shell scripts
+- Integration into automated workflows
+- Server environments without GUI
+- Quick uploads without opening a browser
 
 ### Verifying Indexing
 
